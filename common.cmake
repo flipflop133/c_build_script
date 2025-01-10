@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(-g -Wall -Wextra)
+    add_compile_options(-g -Wall -Wextra -DDEBUG)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3 -flto -march=native -mtune=native)
 endif()
