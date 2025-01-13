@@ -19,10 +19,51 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_options(-g -Wall -Wextra -DDEBUG)
+    add_compile_options(-pg -Wall -Wextra -DDEBUG)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3 -flto -march=native -mtune=native)
 endif()
+
+# Define custom targets for tests
+function(add_test_target name sanitizer_flags command)
+    add_custom_target(${name}
+        COMMAND ${CMAKE_COMMAND} -E env ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1
+        ${CMAKE_C_COMPILER} ${sanitizer_flags}
+        COMMAND ${command}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    )
+endfunction()
+
+# Target for Valgrind massif
+add_custom_target(run_massif
+    COMMAND valgrind --tool=massif --stacks=yes ./build/minimalist-lockscreen
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# Target for Valgrind memcheck
+add_custom_target(run_memcheck
+    COMMAND valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./build/minimalist-lockscreen
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# Targets for Clang sanitizers
+add_custom_target(run_address_sanitizer
+    COMMAND cmake -DCMAKE_C_FLAGS="-fsanitize=address,undefined,leak,integer" -B build && cmake --build build
+    COMMAND ./build/minimalist-lockscreen
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_memory_sanitizer
+    COMMAND cmake -DCMAKE_C_FLAGS="-fsanitize=memory,undefined,leak,integer" -B build && cmake --build build
+    COMMAND ./build/minimalist-lockscreen
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+add_custom_target(run_thread_sanitizer
+    COMMAND cmake -DCMAKE_C_FLAGS="-fsanitize=thread,undefined,leak,integer" -B build && cmake --build build
+    COMMAND ./build/minimalist-lockscreen
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+)
 
 # Add common status messages
 message(STATUS "CMake version: ${CMAKE_VERSION}")
