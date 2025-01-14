@@ -20,6 +20,7 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-pg -Wall -Wextra -DDEBUG)
+    add_link_options(-pg)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3 -flto -march=native -mtune=native)
 endif()
